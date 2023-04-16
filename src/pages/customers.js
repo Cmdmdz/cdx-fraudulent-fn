@@ -1,16 +1,15 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState, useEffect } from 'react';
 import Head from 'next/head';
 import { subDays, subHours } from 'date-fns';
-import ArrowDownOnSquareIcon from '@heroicons/react/24/solid/ArrowDownOnSquareIcon';
-import ArrowUpOnSquareIcon from '@heroicons/react/24/solid/ArrowUpOnSquareIcon';
-import PlusIcon from '@heroicons/react/24/solid/PlusIcon';
 import { Box, Button, Container, Stack, SvgIcon, Typography } from '@mui/material';
 import { useSelection } from 'src/hooks/use-selection';
 import { Layout as DashboardLayout } from 'src/layouts/dashboard/layout';
 import { CustomersTable } from 'src/sections/customer/customers-table';
 import { CustomersSearch } from 'src/sections/customer/customers-search';
 import { applyPagination } from 'src/utils/apply-pagination';
-
+import TrashIcon from '@heroicons/react/24/solid/TrashIcon';
+import { httpClient } from "../utils/HttpClient";
+import { server } from "../constant/Constants";
 const now = new Date();
 
 const data = [
@@ -156,12 +155,12 @@ const data = [
   }
 ];
 
-const useCustomers = (page, rowsPerPage) => {
+const useCustomers = (page, rowsPerPage, customersData) => {
   return useMemo(
     () => {
-      return applyPagination(data, page, rowsPerPage);
+      return applyPagination(customersData, page, rowsPerPage);
     },
-    [page, rowsPerPage]
+    [page, rowsPerPage, customersData]
   );
 };
 
@@ -177,9 +176,27 @@ const useCustomerIds = (customers) => {
 const Page = () => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
-  const customers = useCustomers(page, rowsPerPage);
+  const [customersData, setCustomersData] = useState([]);
+
+  const customers = useCustomers(page, rowsPerPage, customersData);
+
   const customersIds = useCustomerIds(customers);
   const customersSelection = useSelection(customersIds);
+  const [searchTerm, setSearchTerm] = useState('');
+
+  const initialize = async (searchTerm) => {
+    try {
+      const response = await httpClient.get(server.USER_LIST, {
+        params: {
+          searchTerm: searchTerm,
+        },
+      });
+      setCustomersData(response.data);
+    } catch (error) {
+      console.error('Error fetching data from API:', error.message);
+    }
+  };
+
 
   const handlePageChange = useCallback(
     (event, value) => {
@@ -188,6 +205,10 @@ const Page = () => {
     []
   );
 
+  useEffect(() => {
+    initialize();
+  }, []);
+
   const handleRowsPerPageChange = useCallback(
     (event) => {
       setRowsPerPage(event.target.value);
@@ -195,11 +216,38 @@ const Page = () => {
     []
   );
 
+  const handleDeleteSelected = useCallback(() => {
+    httpClient.post(server.DELETE_LIST, 
+       { ids: customersSelection.selected },
+    )
+      .then(response => {
+        console.log('Selected customers deleted successfully');
+        initialize();
+      })
+      .catch(error => {
+        console.error(error);
+        // Handle error here, e.g. by showing an error message to the user
+      });
+
+    console.log(customersSelection.selected);
+
+  }, [customersSelection.selected]);
+
+
+  const handleSearchTermChange = useCallback(
+    (searchValue) => {
+      setSearchTerm(searchValue);
+      initialize(searchValue);
+    },
+    []
+  );
+
+
   return (
     <>
       <Head>
         <title>
-          Customers | Devias Kit
+          รายชื่อผู้ใช้
         </title>
       </Head>
       <Box
@@ -218,51 +266,24 @@ const Page = () => {
             >
               <Stack spacing={1}>
                 <Typography variant="h4">
-                  Customers
+                  รายชื่อผู้ใช้งาน
                 </Typography>
-                <Stack
-                  alignItems="center"
-                  direction="row"
-                  spacing={1}
-                >
-                  <Button
-                    color="inherit"
-                    startIcon={(
-                      <SvgIcon fontSize="small">
-                        <ArrowUpOnSquareIcon />
-                      </SvgIcon>
-                    )}
-                  >
-                    Import
-                  </Button>
-                  <Button
-                    color="inherit"
-                    startIcon={(
-                      <SvgIcon fontSize="small">
-                        <ArrowDownOnSquareIcon />
-                      </SvgIcon>
-                    )}
-                  >
-                    Export
-                  </Button>
-                </Stack>
               </Stack>
-              <div>
+              <Stack direction="row" spacing={2}>
                 <Button
-                  startIcon={(
-                    <SvgIcon fontSize="small">
-                      <PlusIcon />
-                    </SvgIcon>
-                  )}
                   variant="contained"
+                  color="error"
+                  startIcon={<TrashIcon />}
+                  onClick={handleDeleteSelected}
+                  disabled={customersSelection.selected.length === 0}
                 >
-                  Add
+                  Delete
                 </Button>
-              </div>
+              </Stack>
             </Stack>
-            <CustomersSearch />
+            <CustomersSearch onSearch={handleSearchTermChange} />
             <CustomersTable
-              count={data.length}
+              count={customersData.length}
               items={customers}
               onDeselectAll={customersSelection.handleDeselectAll}
               onDeselectOne={customersSelection.handleDeselectOne}

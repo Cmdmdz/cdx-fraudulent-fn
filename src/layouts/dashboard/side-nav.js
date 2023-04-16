@@ -1,7 +1,6 @@
 import NextLink from 'next/link';
 import { usePathname } from 'next/navigation';
-import PropTypes from 'prop-types';
-import ArrowTopRightOnSquareIcon from '@heroicons/react/24/solid/ArrowTopRightOnSquareIcon';
+import PropTypes, { func } from 'prop-types';
 import ChevronUpDownIcon from '@heroicons/react/24/solid/ChevronUpDownIcon';
 import {
   Box,
@@ -15,13 +14,64 @@ import {
 } from '@mui/material';
 import { Logo } from 'src/components/logo';
 import { Scrollbar } from 'src/components/scrollbar';
-import { items } from './config';
 import { SideNavItem } from './side-nav-item';
+import { useAuthContext } from '../../contexts/auth-context';
+import ShoppingBagIcon from '@heroicons/react/24/solid/ArchiveBoxIcon';
+import UsersIcon from '@heroicons/react/24/solid/UsersIcon';
+import HiOutlineCheck from '@heroicons/react/24/solid/PrinterIcon';
 
 export const SideNav = (props) => {
+  const { user } = useAuthContext();
   const { open, onClose } = props;
   const pathname = usePathname();
   const lgUp = useMediaQuery((theme) => theme.breakpoints.up('lg'));
+
+  function items()   {
+    let role = user ? user.role : '';
+
+    if (role === "admin") {
+
+      let us = [
+       
+        {
+          title: 'รายชื่อผู้ใช้',
+          path: '/customers',
+          icon: (
+            <SvgIcon fontSize="small">
+              <UsersIcon />
+            </SvgIcon>
+          )
+        },
+
+        {
+          title: 'อนุมัติ',
+          path: '/approve',
+          icon: (
+            <SvgIcon fontSize="small">
+              <HiOutlineCheck />
+            </SvgIcon>
+          )
+        },
+
+      ];
+
+      return us;
+    } else {
+
+      let n = [
+        {
+          title: 'รายชื่อบัญชีการฉ่อโกง',
+          path: '/',
+          icon: (
+            <SvgIcon fontSize="small">
+              <ShoppingBagIcon />
+            </SvgIcon>
+          )
+        }
+      ];
+      return n;
+    }
+  }
 
   const content = (
     <Scrollbar
@@ -71,13 +121,13 @@ export const SideNav = (props) => {
                 color="inherit"
                 variant="subtitle1"
               >
-                Devias
+                รวบรวมเลขที่บัญชี
               </Typography>
               <Typography
                 color="neutral.400"
                 variant="body2"
               >
-                Production
+                ฉ้อโกงออนไลน์
               </Typography>
             </div>
             <SvgIcon
@@ -106,7 +156,7 @@ export const SideNav = (props) => {
               m: 0
             }}
           >
-            {items.map((item) => {
+            {items().map((item) => {
               const active = item.path ? (pathname === item.path) : false;
 
               return (
@@ -124,56 +174,7 @@ export const SideNav = (props) => {
           </Stack>
         </Box>
         <Divider sx={{ borderColor: 'neutral.700' }} />
-        <Box
-          sx={{
-            px: 2,
-            py: 3
-          }}
-        >
-          <Typography
-            color="neutral.100"
-            variant="subtitle2"
-          >
-            Need more features?
-          </Typography>
-          <Typography
-            color="neutral.500"
-            variant="body2"
-          >
-            Check out our Pro solution template.
-          </Typography>
-          <Box
-            sx={{
-              display: 'flex',
-              mt: 2,
-              mx: 'auto',
-              width: '160px',
-              '& img': {
-                width: '100%'
-              }
-            }}
-          >
-            <img
-              alt="Go to pro"
-              src="/assets/devias-kit-pro.png"
-            />
-          </Box>
-          <Button
-            component="a"
-            endIcon={(
-              <SvgIcon fontSize="small">
-                <ArrowTopRightOnSquareIcon />
-              </SvgIcon>
-            )}
-            fullWidth
-            href="https://material-kit-pro-react.devias.io/"
-            sx={{ mt: 2 }}
-            target="_blank"
-            variant="contained"
-          >
-            Pro Live Preview
-          </Button>
-        </Box>
+
       </Box>
     </Scrollbar>
   );

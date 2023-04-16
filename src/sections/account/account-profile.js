@@ -18,7 +18,11 @@ const user = {
   timezone: 'GTM-7'
 };
 
+// const loginReducer = React.useSelector((state: RootReducers) => state.loginReducer);
+
+
 export const AccountProfile = () => (
+  
   <Card>
     <CardContent>
       <Box

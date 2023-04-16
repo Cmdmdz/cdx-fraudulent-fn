@@ -12,13 +12,13 @@ const Page = () => {
   const auth = useAuth();
   const formik = useFormik({
     initialValues: {
-      email: '',
+      username: '',
       name: '',
       password: '',
       submit: null
     },
     validationSchema: Yup.object({
-      email: Yup
+      username: Yup
         .string()
         .email('Must be a valid email')
         .max(255)
@@ -34,8 +34,8 @@ const Page = () => {
     }),
     onSubmit: async (values, helpers) => {
       try {
-        await auth.signUp(values.email, values.name, values.password);
-        router.push('/');
+        await auth.signUp(values.username, values.name, values.password);
+        router.push('/auth/login');
       } catch (err) {
         helpers.setStatus({ success: false });
         helpers.setErrors({ submit: err.message });
@@ -48,7 +48,7 @@ const Page = () => {
     <>
       <Head>
         <title>
-          Register | Devias Kit
+          ลงทะเบียน
         </title>
       </Head>
       <Box
@@ -73,13 +73,13 @@ const Page = () => {
               sx={{ mb: 3 }}
             >
               <Typography variant="h4">
-                Register
+                ลงทะเบียน
               </Typography>
               <Typography
                 color="text.secondary"
                 variant="body2"
               >
-                Already have an account?
+                มีบัญชีอยู่แล้ว ?
                 &nbsp;
                 <Link
                   component={NextLink}
@@ -87,7 +87,7 @@ const Page = () => {
                   underline="hover"
                   variant="subtitle2"
                 >
-                  Log in
+                  เข้าสู่ระบบ
                 </Link>
               </Typography>
             </Stack>
@@ -100,28 +100,28 @@ const Page = () => {
                   error={!!(formik.touched.name && formik.errors.name)}
                   fullWidth
                   helperText={formik.touched.name && formik.errors.name}
-                  label="Name"
+                  label="ชื่อ - นามสกุล"
                   name="name"
                   onBlur={formik.handleBlur}
                   onChange={formik.handleChange}
                   value={formik.values.name}
                 />
                 <TextField
-                  error={!!(formik.touched.email && formik.errors.email)}
+                  error={!!(formik.touched.username && formik.errors.username)}
                   fullWidth
-                  helperText={formik.touched.email && formik.errors.email}
-                  label="Email Address"
-                  name="email"
+                  helperText={formik.touched.username && formik.errors.username}
+                  label="อีเมล"
+                  name="username"
                   onBlur={formik.handleBlur}
                   onChange={formik.handleChange}
                   type="email"
-                  value={formik.values.email}
+                  value={formik.values.username}
                 />
                 <TextField
                   error={!!(formik.touched.password && formik.errors.password)}
                   fullWidth
                   helperText={formik.touched.password && formik.errors.password}
-                  label="Password"
+                  label="รหัสผ่าน"
                   name="password"
                   onBlur={formik.handleBlur}
                   onChange={formik.handleChange}
@@ -145,7 +145,7 @@ const Page = () => {
                 type="submit"
                 variant="contained"
               >
-                Continue
+                ลงทะเบียน
               </Button>
             </form>
           </div>

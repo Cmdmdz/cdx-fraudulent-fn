@@ -4,11 +4,12 @@ import { Layout as DashboardLayout } from 'src/layouts/dashboard/layout';
 import { AccountProfile } from 'src/sections/account/account-profile';
 import { AccountProfileDetails } from 'src/sections/account/account-profile-details';
 
+
 const Page = () => (
   <>
     <Head>
       <title>
-        Account | Devias Kit
+      โพสต์
       </title>
     </Head>
     <Box
@@ -22,7 +23,7 @@ const Page = () => (
         <Stack spacing={3}>
           <div>
             <Typography variant="h4">
-              Account
+              โพสต์
             </Typography>
           </div>
           <div>
@@ -30,13 +31,7 @@ const Page = () => (
               container
               spacing={3}
             >
-              <Grid
-                xs={12}
-                md={6}
-                lg={4}
-              >
-                <AccountProfile />
-              </Grid>
+       
               <Grid
                 xs={12}
                 md={6}

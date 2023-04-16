@@ -18,6 +18,7 @@ import {
 } from '@mui/material';
 import { useAuth } from 'src/hooks/use-auth';
 import { Layout as AuthLayout } from 'src/layouts/auth/layout';
+import { withAuthRedirect } from '../../contexts/withAuthRedirect';
 
 const Page = () => {
   const router = useRouter();
@@ -25,8 +26,8 @@ const Page = () => {
   const [method, setMethod] = useState('email');
   const formik = useFormik({
     initialValues: {
-      email: 'demo@devias.io',
-      password: 'Password123!',
+      email: '',
+      password: '',
       submit: null
     },
     validationSchema: Yup.object({
@@ -46,7 +47,7 @@ const Page = () => {
         router.push('/');
       } catch (err) {
         helpers.setStatus({ success: false });
-        helpers.setErrors({ submit: err.message });
+        helpers.setErrors({ submit: "อีเมลหรือรหัสผ่านไม่ถูกต้อง" });
         helpers.setSubmitting(false);
       }
     }
@@ -69,9 +70,10 @@ const Page = () => {
 
   return (
     <>
+    <AuthLayout>
       <Head>
         <title>
-          Login | Devias Kit
+          Login
         </title>
       </Head>
       <Box
@@ -97,13 +99,13 @@ const Page = () => {
               sx={{ mb: 3 }}
             >
               <Typography variant="h4">
-                Login
+                กรุณาเข้าสู่ระบบ
               </Typography>
               <Typography
                 color="text.secondary"
                 variant="body2"
               >
-                Don&apos;t have an account?
+                ยังไม่มีบัญชี ?
                 &nbsp;
                 <Link
                   component={NextLink}
@@ -111,75 +113,59 @@ const Page = () => {
                   underline="hover"
                   variant="subtitle2"
                 >
-                  Register
+                  สมัครสมาชิก
                 </Link>
               </Typography>
             </Stack>
-            <Tabs
-              onChange={handleMethodChange}
-              sx={{ mb: 3 }}
-              value={method}
+
+            <form
+              noValidate
+              onSubmit={formik.handleSubmit}
             >
-              <Tab
-                label="Email"
-                value="email"
-              />
-              <Tab
-                label="Phone Number"
-                value="phoneNumber"
-              />
-            </Tabs>
-            {method === 'email' && (
-              <form
-                noValidate
-                onSubmit={formik.handleSubmit}
-              >
-                <Stack spacing={3}>
-                  <TextField
-                    error={!!(formik.touched.email && formik.errors.email)}
-                    fullWidth
-                    helperText={formik.touched.email && formik.errors.email}
-                    label="Email Address"
-                    name="email"
-                    onBlur={formik.handleBlur}
-                    onChange={formik.handleChange}
-                    type="email"
-                    value={formik.values.email}
-                  />
-                  <TextField
-                    error={!!(formik.touched.password && formik.errors.password)}
-                    fullWidth
-                    helperText={formik.touched.password && formik.errors.password}
-                    label="Password"
-                    name="password"
-                    onBlur={formik.handleBlur}
-                    onChange={formik.handleChange}
-                    type="password"
-                    value={formik.values.password}
-                  />
-                </Stack>
-                <FormHelperText sx={{ mt: 1 }}>
-                  Optionally you can skip.
-                </FormHelperText>
-                {formik.errors.submit && (
-                  <Typography
-                    color="error"
-                    sx={{ mt: 3 }}
-                    variant="body2"
-                  >
-                    {formik.errors.submit}
-                  </Typography>
-                )}
-                <Button
+              <Stack spacing={3}>
+                <TextField
+                  error={!!(formik.touched.email && formik.errors.email)}
                   fullWidth
-                  size="large"
+                  helperText={formik.touched.email && formik.errors.email}
+                  label="อีเมล"
+                  name="email"
+                  onBlur={formik.handleBlur}
+                  onChange={formik.handleChange}
+                  type="email"
+                  value={formik.values.email}
+                />
+                <TextField
+                  error={!!(formik.touched.password && formik.errors.password)}
+                  fullWidth
+                  helperText={formik.touched.password && formik.errors.password}
+                  label="รหัสผ่าน"
+                  name="password"
+                  onBlur={formik.handleBlur}
+                  onChange={formik.handleChange}
+                  type="password"
+                  value={formik.values.password}
+                />
+              </Stack>
+           
+              {formik.errors.submit && (
+                <Typography
+                  color="error"
                   sx={{ mt: 3 }}
-                  type="submit"
-                  variant="contained"
+                  variant="body2"
                 >
-                  Continue
-                </Button>
-                <Button
+                  {formik.errors.submit}
+                </Typography>
+              )}
+              <Button
+                fullWidth
+                size="large"
+                sx={{ mt: 3 }}
+                type="submit"
+                variant="contained"
+              >
+                เข้าสู่ระบบ
+              </Button>
+              <Button
                   fullWidth
                   size="large"
                   sx={{ mt: 3 }}
@@ -187,41 +173,15 @@ const Page = () => {
                 >
                   Skip authentication
                 </Button>
-                <Alert
-                  color="primary"
-                  severity="info"
-                  sx={{ mt: 3 }}
-                >
-                  <div>
-                    You can use <b>demo@devias.io</b> and password <b>Password123!</b>
-                  </div>
-                </Alert>
-              </form>
-            )}
-            {method === 'phoneNumber' && (
-              <div>
-                <Typography
-                  sx={{ mb: 1 }}
-                  variant="h6"
-                >
-                  Not available in the demo
-                </Typography>
-                <Typography color="text.secondary">
-                  To prevent unnecessary costs we disabled this feature in the demo.
-                </Typography>
-              </div>
-            )}
+            </form>
+
           </div>
         </Box>
       </Box>
+      </AuthLayout>
     </>
   );
 };
 
-Page.getLayout = (page) => (
-  <AuthLayout>
-    {page}
-  </AuthLayout>
-);
 
 export default Page;

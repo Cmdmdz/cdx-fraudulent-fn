@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useReducer, useRef } from 'react';
 import PropTypes from 'prop-types';
-
+import { httpClient } from "../utils/HttpClient";
+import { server } from "../constant/Constants";
 const HANDLERS = {
   INITIALIZE: 'INITIALIZE',
   SIGN_IN: 'SIGN_IN',
@@ -20,7 +21,6 @@ const handlers = {
     return {
       ...state,
       ...(
-        // if payload (user) is provided, then is authenticated
         user
           ? ({
             isAuthenticated: true,
@@ -55,9 +55,27 @@ const reducer = (state, action) => (
   handlers[action.type] ? handlers[action.type](state, action) : state
 );
 
-// The role of this context is to propagate authentication state through the App tree.
-
 export const AuthContext = createContext({ undefined });
+
+const storeUserInSession = (user) => {
+  try {
+    window.sessionStorage.setItem('authenticated', 'true');
+    window.sessionStorage.setItem('user', JSON.stringify(user));
+  } catch (err) {
+    console.error(err);
+  }
+};
+
+const getUserFromSession = () => {
+  try {
+    const isAuthenticated = window.sessionStorage.getItem('authenticated') === 'true';
+    const user = JSON.parse(window.sessionStorage.getItem('user'));
+    return isAuthenticated && user ? user : null;
+  } catch (err) {
+    console.error(err);
+    return null;
+  }
+};
 
 export const AuthProvider = (props) => {
   const { children } = props;
@@ -65,29 +83,15 @@ export const AuthProvider = (props) => {
   const initialized = useRef(false);
 
   const initialize = async () => {
-    // Prevent from calling twice in development mode with React.StrictMode enabled
     if (initialized.current) {
       return;
     }
 
     initialized.current = true;
 
-    let isAuthenticated = false;
+    const user = getUserFromSession();
 
-    try {
-      isAuthenticated = window.sessionStorage.getItem('authenticated') === 'true';
-    } catch (err) {
-      console.error(err);
-    }
-
-    if (isAuthenticated) {
-      const user = {
-        id: '5e86809283e28b96d2d38537',
-        avatar: '/assets/avatars/avatar-anika-visser.png',
-        name: 'Anika Visser',
-        email: 'anika.visser@devias.io'
-      };
-
+    if (user) {
       dispatch({
         type: HANDLERS.INITIALIZE,
         payload: user
@@ -99,13 +103,49 @@ export const AuthProvider = (props) => {
     }
   };
 
-  useEffect(
-    () => {
-      initialize();
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    []
-  );
+  useEffect(() => {
+    initialize();
+  }, []);
+
+  const signIn = async (username, password) => {
+    const result = await httpClient.post(server.LOGIN_URL, { username, password });
+    if (result.status === 200 && result.data.token != null) {
+      storeUserInSession(result.data);
+
+      dispatch({
+        type: HANDLERS.SIGN_IN,
+        payload: result.data,
+      });
+    } else {
+      throw new Error('Please check your email and password');
+    }
+  };
+
+  const signUp = async (username, name, password) => {
+    // Create a user object with the received parameters
+    const user = {
+      username,
+      name,
+      password,
+    };
+  
+    try {
+      // Make a POST request to the registration endpoint with the user object
+      const result = await httpClient.post(server.REGISTER_URL, user);
+  
+      if (result.status === 201) {
+        // Registration successful
+        // You can handle additional logic here, such as sending a welcome email
+        // or redirecting the user to the login page to sign in
+      } else {
+        // Registration failed
+        throw new Error('Sign up failed. Please try again.');
+      }
+    } catch (error) {
+      console.error('Sign up error:', error);
+      throw new Error('Sign up failed. Please try again.');
+    }
+  };
 
   const skip = () => {
     try {
@@ -114,48 +154,20 @@ export const AuthProvider = (props) => {
       console.error(err);
     }
 
-    const user = {
-      id: '5e86809283e28b96d2d38537',
-      avatar: '/assets/avatars/avatar-anika-visser.png',
-      name: 'Anika Visser',
-      email: 'anika.visser@devias.io'
-    };
-
     dispatch({
       type: HANDLERS.SIGN_IN,
-      payload: user
+      payload: null
     });
   };
-
-  const signIn = async (email, password) => {
-    if (email !== 'demo@devias.io' || password !== 'Password123!') {
-      throw new Error('Please check your email and password');
-    }
-
+  
+  const signOut = () => {
     try {
-      window.sessionStorage.setItem('authenticated', 'true');
+      window.sessionStorage.removeItem('authenticated');
+      window.sessionStorage.removeItem('user');
     } catch (err) {
       console.error(err);
     }
 
-    const user = {
-      id: '5e86809283e28b96d2d38537',
-      avatar: '/assets/avatars/avatar-anika-visser.png',
-      name: 'Anika Visser',
-      email: 'anika.visser@devias.io'
-    };
-
-    dispatch({
-      type: HANDLERS.SIGN_IN,
-      payload: user
-    });
-  };
-
-  const signUp = async (email, name, password) => {
-    throw new Error('Sign up is not implemented');
-  };
-
-  const signOut = () => {
     dispatch({
       type: HANDLERS.SIGN_OUT
     });
@@ -165,10 +177,10 @@ export const AuthProvider = (props) => {
     <AuthContext.Provider
       value={{
         ...state,
-        skip,
         signIn,
         signUp,
-        signOut
+        signOut,
+        skip
       }}
     >
       {children}
